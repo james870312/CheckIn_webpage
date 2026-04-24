@@ -6,8 +6,9 @@
     <title>智慧考勤系統</title>
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
-        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
+        /* 讓卡片可以上下滑動，避免螢幕太小被截斷 */
+        body { background-color: #f4f7f6; display: flex; justify-content: center; align-items: flex-start; min-height: 100vh; margin: 0; padding: 20px 10px; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 400px; text-align: center; }
         
         .input-group { margin-bottom: 15px; text-align: left; }
         label { display: block; margin-bottom: 5px; color: #555; font-size: 0.9rem; font-weight: bold; }
@@ -22,10 +23,25 @@
         .btn-in { background-color: #3498db; } .btn-in:hover { background-color: #2980b9; }
         .btn-out { background-color: #f39c12; } .btn-out:hover { background-color: #d68910; }
         .btn-leave { background-color: #9b59b6; } .btn-leave:hover { background-color: #8e44ad; }
+        .btn-load { background-color: #2c3e50; margin-top: 15px; font-size: 1rem; } .btn-load:hover { background-color: #1a252f; }
         button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
         
         #message { margin-top: 15px; font-weight: bold; min-height: 20px; font-size: 0.9rem; }
         .success { color: #27ae60; } .error { color: #c0392b; }
+
+        /* --- 新增的表格樣式 --- */
+        hr { border: 0; border-top: 1px solid #ecf0f1; margin: 25px 0 15px 0; }
+        .table-container { display: none; margin-top: 15px; max-height: 300px; overflow-y: auto; border-radius: 8px; border: 1px solid #eee; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; text-align: center; }
+        th { background-color: #f8f9fa; color: #333; padding: 10px; position: sticky; top: 0; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        td { padding: 10px 5px; border-bottom: 1px solid #f1f1f1; color: #555; }
+        tr:last-child td { border-bottom: none; }
+        
+        /* 狀態標籤美化 */
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; color: white; display: inline-block;}
+        .status-ok { background-color: #2ecc71; } /* 有上班 */
+        .status-no { background-color: #e74c3c; } /* 未上班 */
+        .status-none { background-color: #95a5a6; } /* 尚未填寫 */
     </style>
 </head>
 <body>
@@ -50,19 +66,35 @@
     </div>
 
     <div id="message"></div>
+
+    <hr>
+    <button class="btn-load" id="btnLoad" onclick="fetchRecords()">📋 展開本月打卡紀錄</button>
+    
+    <div class="table-container" id="tableContainer">
+        <table id="recordTable">
+            <thead>
+                <tr>
+                    <th>日期</th>
+                    <th>狀態</th>
+                    <th>上班</th>
+                    <th>下班</th>
+                </tr>
+            </thead>
+            <tbody id="recordBody">
+                </tbody>
+        </table>
+    </div>
 </div>
 
 <script>
-    // ⚠️ 貼上你最新建立的 Apps Script 網址
+    // ⚠️ 請確保這是你最新部署、包含 doGet 函式的 Apps Script 網址
     const API_URL = 'https://script.google.com/macros/s/AKfycbzwgXqUK38lIZJydiv-Gu7wR31ux3oJy4YCtVZ888qRm98wmIV1oqupxm1I8f7th86bxw/exec';
 
-    // 國定假日判定維持 月/日 (每年固定)，若需指定年份可自行改為 "2026/1/1"
     const nationalHolidays = ["1/1", "2/28", "4/4", "4/5", "5/1", "10/10"];
     let currentParsedDate = { year: 0, month: 0, dateStr: "", isOffDay: false };
 
     function initDateTime() {
         const now = new Date();
-        
         const yyyy = now.getFullYear();
         const mm = String(now.getMonth() + 1).padStart(2, '0');
         const dd = String(now.getDate()).padStart(2, '0');
@@ -85,18 +117,13 @@
         const date = d.getDate();
         const dayOfWeek = d.getDay();
         
-        // 🌟 核心修改：強制幫月份與日期補零 (變成 04, 05 等)
         const mmStr = String(month).padStart(2, '0');
         const ddStr = String(date).padStart(2, '0');
-        
-        // 組合出絕對標準格式，例如 "2026/04/26"
         const fullDateStr = `${year}/${mmStr}/${ddStr}`; 
         
-        // 假日判定維持不補零 (因為 nationalHolidays 陣列裡寫的是 "4/5")
         const holidayCheckStr = `${month}/${date}`;
         let isOffDay = (dayOfWeek === 0 || dayOfWeek === 6 || nationalHolidays.includes(holidayCheckStr));
 
-        // 更新狀態物件 (存入補零後的 fullDateStr)
         currentParsedDate = { year: year, month: month, dateStr: fullDateStr, isOffDay: isOffDay };
 
         const badge = document.getElementById('holidayBadge');
@@ -109,30 +136,27 @@
             document.getElementById('btnIn').disabled = false;
             document.getElementById('btnOut').disabled = false;
         }
+
+        // 🌟 新增：只要日期一改，就動態更新下方按鈕的文字！
+        const loadBtn = document.getElementById('btnLoad');
+        if (document.getElementById('tableContainer').style.display !== 'block') {
+             loadBtn.innerHTML = `📋 展開 ${month} 月打卡紀錄`;
+        }
     }
 
     async function sendPunch(action) {
+         // ... (保持你原本的傳送邏輯不變) ...
         const msgDiv = document.getElementById('message');
         const buttons = document.querySelectorAll('button');
         const timeVal = document.getElementById('timePicker').value;
         
-        if (!timeVal || !currentParsedDate.dateStr) {
-            msgDiv.textContent = '❌ 請確認日期與時間皆已填寫';
-            msgDiv.className = 'error';
-            return;
-        }
+        if (!timeVal || !currentParsedDate.dateStr) return;
 
         buttons.forEach(btn => btn.disabled = true);
         msgDiv.textContent = '資料傳送中...';
         msgDiv.className = '';
 
-        const payload = {
-            action: action,
-            month: currentParsedDate.month,           
-            searchDateStr: currentParsedDate.dateStr, // 這裡現在會送出 "2026/4/5"
-            timeStr: timeVal,                         
-            isOffDay: currentParsedDate.isOffDay
-        };
+        const payload = { action: action, month: currentParsedDate.month, searchDateStr: currentParsedDate.dateStr, timeStr: timeVal, isOffDay: currentParsedDate.isOffDay };
 
         try {
             const response = await fetch(API_URL, {
@@ -140,30 +164,98 @@
                 headers: { 'Content-Type': 'text/plain;charset=utf-8' },
                 body: JSON.stringify(payload)
             });
-            
             const result = await response.json();
             
             if (result.status === "success") {
                 let actionText = action === 'in' ? '上班' : (action === 'out' ? '下班' : '請假');
                 msgDiv.textContent = `✅ ${currentParsedDate.dateStr} ${actionText} 紀錄成功！`;
                 msgDiv.className = 'success';
+                // 打卡成功後，如果表格開著，自動重新整理表格！
+                if(document.getElementById('tableContainer').style.display === 'block'){
+                    fetchRecords();
+                }
             } else {
                 msgDiv.textContent = `❌ ${result.message}`;
                 msgDiv.className = 'error';
             }
-            
         } catch (error) {
-            msgDiv.textContent = '❌ 傳送失敗，請檢查網路或 API 設定。';
+            msgDiv.textContent = '❌ 傳送失敗，請檢查網路。';
             msgDiv.className = 'error';
         } finally {
             setTimeout(() => { 
                 msgDiv.textContent = ''; 
                 document.getElementById('btnLeave').disabled = false;
+                document.getElementById('btnLoad').disabled = false;
                 if (!currentParsedDate.isOffDay) {
                     document.getElementById('btnIn').disabled = false;
                     document.getElementById('btnOut').disabled = false;
                 }
             }, 4000);
+        }
+    }
+
+    // --- 新增：撈取資料並生成表格的函式 ---
+    async function fetchRecords() {
+        const loadBtn = document.getElementById('btnLoad');
+        const tableContainer = document.getElementById('tableContainer');
+        const tbody = document.getElementById('recordBody');
+        
+        // 抓取目前選擇的月份
+        const targetMonth = currentParsedDate.month;
+
+        if (tableContainer.style.display === 'block') {
+            tableContainer.style.display = 'none';
+            loadBtn.innerHTML = `📋 展開 ${targetMonth} 月打卡紀錄`;
+            return;
+        }
+
+        loadBtn.disabled = true;
+        loadBtn.innerHTML = '🔄 讀取資料中...';
+
+        try {
+            // 🌟 核心修改：在 API 網址後面加上 ?month=指定的月份
+            const requestUrl = `${API_URL}?month=${targetMonth}`;
+            const response = await fetch(requestUrl);
+            const result = await response.json();
+
+            if (result.status === "success") {
+                tbody.innerHTML = ''; 
+                
+                const reversedData = result.data.reverse();
+
+                // 如果該月完全沒資料，給個貼心提示
+                if (reversedData.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:15px; color:#999;">📭 這個月目前還沒有紀錄喔！</td></tr>`;
+                } else {
+                    reversedData.forEach(row => {
+                        let statusClass = "status-none";
+                        if (row.status.includes('有上班')) statusClass = "status-ok";
+                        if (row.status.includes('未上班')) statusClass = "status-no";
+                        
+                        let statusHtml = row.status !== "-" ? `<span class="status-badge ${statusClass}">${row.status}</span>` : "-";
+
+                        const tr = document.createElement('tr');
+                        tr.innerHTML = `
+                            <td><strong>${row.date}</strong></td>
+                            <td>${statusHtml}</td>
+                            <td>${row.inTime}</td>
+                            <td>${row.outTime}</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }
+
+                tableContainer.style.display = 'block';
+                loadBtn.innerHTML = `⬆️ 收合 ${targetMonth} 月打卡紀錄`;
+            } else {
+                alert("讀取失敗：" + result.message);
+                loadBtn.innerHTML = `📋 展開 ${targetMonth} 月打卡紀錄`;
+            }
+        } catch (error) {
+            alert("網路連線異常，無法讀取資料");
+            loadBtn.innerHTML = `📋 展開 ${targetMonth} 月打卡紀錄`;
+        } finally {
+            loadBtn.disabled = false;
         }
     }
 
