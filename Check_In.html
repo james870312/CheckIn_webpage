@@ -3,401 +3,172 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pierce & James 稱號展示廳</title>
+    <title>智慧考勤系統</title>
     <style>
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: #2c3e50; 
-            color: #ecf0f1;
-            max-width: 1200px; /* 拉寬版面以容納左右兩邊 */
-            margin: 0 auto;
-            padding: 20px;
-        }
-        h1 {
-            text-align: center;
-            color: #f1c40f;
-            letter-spacing: 2px;
-            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
-            margin-bottom: 5px;
-        }
-        p.subtitle {
-            text-align: center;
-            color: #bdc3c7;
-            margin-bottom: 40px;
-            font-size: 1.1em;
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f4f7f6; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); width: 100%; max-width: 380px; text-align: center; }
+        
+        .input-group { margin-bottom: 15px; text-align: left; }
+        label { display: block; margin-bottom: 5px; color: #555; font-size: 0.9rem; font-weight: bold; }
+        input[type="date"], input[type="time"] {
+            width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 1.1rem; text-align: center; font-family: monospace;
         }
         
-        /* 控制面板區塊 */
-        .control-panel {
-            background: rgba(255, 255, 255, 0.1);
-            padding: 25px;
-            border-radius: 15px;
-            backdrop-filter: blur(5px);
-            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
-            margin-bottom: 50px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            max-width: 800px;
-            margin-left: auto;
-            margin-right: auto;
-        }
-        .form-row {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            margin-bottom: 15px;
-        }
-        .form-group {
-            flex: 1;
-            min-width: 200px;
-        }
-        label {
-            display: block;
-            margin-bottom: 8px;
-            font-weight: bold;
-            color: #f39c12;
-        }
-        input[type="text"], select {
-            width: 100%;
-            padding: 12px;
-            background: rgba(255, 255, 255, 0.9);
-            border: none;
-            border-radius: 8px;
-            box-sizing: border-box;
-            font-size: 16px;
-            color: #333;
-        }
-        button.forge-btn {
-            width: 100%;
-            padding: 15px;
-            background-color: #f39c12;
-            color: #2c3e50;
-            border: none;
-            border-radius: 8px;
-            font-size: 18px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.2);
-        }
-        button.forge-btn:hover {
-            background-color: #f1c40f;
-            transform: translateY(-2px);
-        }
-
-        /* 雙邊展示區塊 */
-        .split-showcase {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 40px;
-        }
-        .recipient-column {
-            background: rgba(0, 0, 0, 0.2);
-            border-radius: 15px;
-            padding: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-        .column-title {
-            text-align: center;
-            font-size: 1.8em;
-            margin-top: 0;
-            padding-bottom: 15px;
-            border-bottom: 2px dashed rgba(255, 255, 255, 0.2);
-        }
-        .title-pierce { color: #3498db; }
-        .title-james { color: #2ecc71; }
-
-        .showcase-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-            gap: 25px;
-            padding-top: 20px;
-        }
-
-        .medal-plaque {
-            background: linear-gradient(145deg, #ffffff, #e6e6e6);
-            border-radius: 12px;
-            padding: 20px;
-            text-align: center;
-            color: #333;
-            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
-            position: relative;
-            margin-top: 30px; 
-            transition: transform 0.3s;
-        }
-        .medal-plaque:hover {
-            transform: translateY(-5px) scale(1.02);
-        }
+        .holiday-badge { display: none; background-color: #e74c3c; color: white; padding: 5px 10px; border-radius: 20px; font-size: 0.85rem; margin-bottom: 15px; font-weight: bold; }
         
-        /* 獎牌視覺設計 */
-        .medal-icon {
-            font-size: 3.5em;
-            width: 80px;
-            height: 80px;
-            background: #fff;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin: -60px auto 15px auto;
-            box-shadow: 0 6px 12px rgba(0,0,0,0.2);
-            border: 4px solid;
-            position: relative;
-            z-index: 2;
-        }
-        .medal-icon::before {
-            content: '';
-            position: absolute;
-            top: -10px;
-            z-index: -1;
-            width: 40px;
-            height: 30px;
-            background: currentColor;
-            clip-path: polygon(0 0, 100% 0, 80% 100%, 20% 100%);
-            opacity: 0.8;
-        }
-
-        .plaque-title {
-            font-size: 1.5em;
-            font-weight: 900;
-            margin: 10px 0;
-            color: #2c3e50;
-        }
-        .plaque-category {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-size: 0.85em;
-            font-weight: bold;
-            color: white;
-            margin-bottom: 10px;
-        }
-        .plaque-reason {
-            font-size: 0.95em;
-            color: #666;
-            font-style: italic;
-            margin-top: 15px;
-            padding-top: 15px;
-            border-top: 1px dashed #ccc;
-            min-height: 20px;
-        }
+        .btn-group { display: flex; gap: 10px; flex-direction: column; margin-top: 20px; }
+        button { width: 100%; padding: 12px; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: bold; cursor: pointer; transition: 0.2s; color: white; }
+        .btn-in { background-color: #3498db; } .btn-in:hover { background-color: #2980b9; }
+        .btn-out { background-color: #f39c12; } .btn-out:hover { background-color: #d68910; }
+        .btn-leave { background-color: #9b59b6; } .btn-leave:hover { background-color: #8e44ad; }
+        button:disabled { background-color: #bdc3c7; cursor: not-allowed; }
         
-        .delete-btn {
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            background: none;
-            border: none;
-            color: #bbb;
-            font-size: 1.2em;
-            cursor: pointer;
-            width: auto;
-            padding: 5px;
-        }
-        .delete-btn:hover {
-            color: #e74c3c;
-        }
-
-        .empty-state {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 40px 20px;
-            color: #7f8c8d;
-            font-style: italic;
-        }
-
-        /* 手機版排版 */
-        @media (max-width: 768px) {
-            .split-showcase {
-                grid-template-columns: 1fr; /* 手機上變成上下排列 */
-            }
-        }
+        #message { margin-top: 15px; font-weight: bold; min-height: 20px; font-size: 0.9rem; }
+        .success { color: #27ae60; } .error { color: #c0392b; }
     </style>
 </head>
 <body>
 
-    <h1>🏆 Pierce & James 的稱號展示廳 🏆</h1>
-    <p class="subtitle">榮耀、黑歷史與相愛相殺的見證</p>
+<div class="card">
+    <div class="holiday-badge" id="holidayBadge">🏖️ 此日期為休假日</div>
 
-    <div class="control-panel">
-        <div class="form-row">
-            <div class="form-group">
-                <label for="recipient">受封者</label>
-                <select id="recipient">
-                    <option value="Pierce">Pierce</option>
-                    <option value="James">James</option>
-                </select>
-            </div>
-            <div class="form-group">
-                <label for="category">稱號類別</label>
-                <select id="category">
-                    <option value="honor">🏆 榮耀勳章</option>
-                    <option value="funny">🤡 搞笑事蹟</option>
-                    <option value="dark">🙈 終極黑歷史</option>
-                    <option value="love">💖 專屬愛稱</option>
-                </select>
-            </div>
-        </div>
-        <div class="form-row">
-            <div class="form-group">
-                <label for="nickname">頒發稱號</label>
-                <input type="text" id="nickname" placeholder="例如：東區遲到王、地獄主廚..." required>
-            </div>
-            <div class="form-group">
-                <label for="reason">受封事蹟 (選填)</label>
-                <input type="text" id="reason" placeholder="簡短敘述一下豐功偉業...">
-            </div>
-        </div>
-        <button class="forge-btn" onclick="addNickname()">鑄造獎牌 🔨</button>
+    <div class="input-group">
+        <label for="datePicker">📅 選擇日期 (預設為今天)</label>
+        <input type="date" id="datePicker" onchange="checkDateType()">
+    </div>
+    
+    <div class="input-group">
+        <label for="timePicker">⏰ 打卡時間 (預設為現在)</label>
+        <input type="time" id="timePicker">
     </div>
 
-    <div class="split-showcase">
-        <div class="recipient-column">
-            <h2 class="column-title title-pierce">🛡️ Pierce 的收藏櫃</h2>
-            <div class="showcase-grid" id="pierceArea">
-                </div>
-        </div>
-
-        <div class="recipient-column">
-            <h2 class="column-title title-james">🛡️ James 的收藏櫃</h2>
-            <div class="showcase-grid" id="jamesArea">
-                </div>
-        </div>
+    <div class="btn-group">
+        <button class="btn-in" id="btnIn" onclick="sendPunch('in')">☀️ 上班打卡</button>
+        <button class="btn-out" id="btnOut" onclick="sendPunch('out')">🌙 下班打卡</button>
+        <button class="btn-leave" id="btnLeave" onclick="sendPunch('leave')">📝 登記請假</button>
     </div>
 
-    <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbyh0s8HK2QmWiUaa2hNCb5poEkScO-hB42YGnJfkH5xNSus5p6X81DVFyUVIlEiSLfyIw/exec";
-        let nicknamesArray = [];
+    <div id="message"></div>
+</div>
 
-        const categoryConfig = {
-            'honor': { icon: '🥇', label: '榮耀勳章', color: '#f1c40f' },
-            'funny': { icon: '🏅', label: '搞笑事蹟', color: '#e67e22' },
-            'dark':  { icon: '🎖️', label: '終極黑歷史', color: '#9b59b6' },
-            'love':  { icon: '🏵️', label: '專屬愛稱', color: '#e74c3c' }
+<script>
+    // ⚠️ 貼上你最新建立的 Apps Script 網址
+    const API_URL = 'https://script.google.com/macros/s/AKfycbzwgXqUK38lIZJydiv-Gu7wR31ux3oJy4YCtVZ888qRm98wmIV1oqupxm1I8f7th86bxw/exec';
+
+    // 國定假日判定維持 月/日 (每年固定)，若需指定年份可自行改為 "2026/1/1"
+    const nationalHolidays = ["1/1", "2/28", "4/4", "4/5", "5/1", "10/10"];
+    let currentParsedDate = { year: 0, month: 0, dateStr: "", isOffDay: false };
+
+    function initDateTime() {
+        const now = new Date();
+        
+        const yyyy = now.getFullYear();
+        const mm = String(now.getMonth() + 1).padStart(2, '0');
+        const dd = String(now.getDate()).padStart(2, '0');
+        document.getElementById('datePicker').value = `${yyyy}-${mm}-${dd}`;
+        
+        const hours = String(now.getHours()).padStart(2, '0');
+        const mins = String(now.getMinutes()).padStart(2, '0');
+        document.getElementById('timePicker').value = `${hours}:${mins}`;
+
+        checkDateType(); 
+    }
+
+    function checkDateType() {
+        const selectedDateVal = document.getElementById('datePicker').value;
+        if (!selectedDateVal) return;
+
+        const d = new Date(selectedDateVal);
+        const year = d.getFullYear();     
+        const month = d.getMonth() + 1;
+        const date = d.getDate();
+        const dayOfWeek = d.getDay();
+        
+        // 🌟 核心修改：強制幫月份與日期補零 (變成 04, 05 等)
+        const mmStr = String(month).padStart(2, '0');
+        const ddStr = String(date).padStart(2, '0');
+        
+        // 組合出絕對標準格式，例如 "2026/04/26"
+        const fullDateStr = `${year}/${mmStr}/${ddStr}`; 
+        
+        // 假日判定維持不補零 (因為 nationalHolidays 陣列裡寫的是 "4/5")
+        const holidayCheckStr = `${month}/${date}`;
+        let isOffDay = (dayOfWeek === 0 || dayOfWeek === 6 || nationalHolidays.includes(holidayCheckStr));
+
+        // 更新狀態物件 (存入補零後的 fullDateStr)
+        currentParsedDate = { year: year, month: month, dateStr: fullDateStr, isOffDay: isOffDay };
+
+        const badge = document.getElementById('holidayBadge');
+        if (isOffDay) {
+            badge.style.display = 'inline-block';
+            document.getElementById('btnIn').disabled = true;
+            document.getElementById('btnOut').disabled = true;
+        } else {
+            badge.style.display = 'none';
+            document.getElementById('btnIn').disabled = false;
+            document.getElementById('btnOut').disabled = false;
+        }
+    }
+
+    async function sendPunch(action) {
+        const msgDiv = document.getElementById('message');
+        const buttons = document.querySelectorAll('button');
+        const timeVal = document.getElementById('timePicker').value;
+        
+        if (!timeVal || !currentParsedDate.dateStr) {
+            msgDiv.textContent = '❌ 請確認日期與時間皆已填寫';
+            msgDiv.className = 'error';
+            return;
+        }
+
+        buttons.forEach(btn => btn.disabled = true);
+        msgDiv.textContent = '資料傳送中...';
+        msgDiv.className = '';
+
+        const payload = {
+            action: action,
+            month: currentParsedDate.month,           
+            searchDateStr: currentParsedDate.dateStr, // 這裡現在會送出 "2026/4/5"
+            timeStr: timeVal,                         
+            isOffDay: currentParsedDate.isOffDay
         };
 
-        function renderList() {
-            const pierceArea = document.getElementById('pierceArea');
-            const jamesArea = document.getElementById('jamesArea');
+        try {
+            const response = await fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                body: JSON.stringify(payload)
+            });
             
-            // 清空現有列表
-            pierceArea.innerHTML = ''; 
-            jamesArea.innerHTML = '';
-
-            let pierceCount = 0;
-            let jamesCount = 0;
-
-            const displayArray = [...nicknamesArray].reverse();
-
-            displayArray.forEach((item, index) => {
-                const originalIndex = nicknamesArray.length - 1 - index;
-                const config = categoryConfig[item.category] || categoryConfig['honor'];
-
-                const plaque = document.createElement('div');
-                plaque.className = 'medal-plaque';
-                
-                plaque.innerHTML = `
-                    <button class="delete-btn" onclick="deleteNickname(${originalIndex})" title="銷毀獎牌">✖</button>
-                    <div class="medal-icon" style="border-color: ${config.color}; color: ${config.color};">
-                        ${config.icon}
-                    </div>
-                    <div class="plaque-category" style="background-color: ${config.color};">
-                        ${config.label}
-                    </div>
-                    <div class="plaque-title">「${item.nickname}」</div>
-                    <div class="plaque-reason">${item.reason ? `📜 ${item.reason}` : '📜 （無須多言，懂的都懂）'}</div>
-                `;
-
-                // 根據受封者分發到不同的展示區
-                if (item.recipient === 'Pierce') {
-                    pierceArea.appendChild(plaque);
-                    pierceCount++;
-                } else if (item.recipient === 'James') {
-                    jamesArea.appendChild(plaque);
-                    jamesCount++;
+            const result = await response.json();
+            
+            if (result.status === "success") {
+                let actionText = action === 'in' ? '上班' : (action === 'out' ? '下班' : '請假');
+                msgDiv.textContent = `✅ ${currentParsedDate.dateStr} ${actionText} 紀錄成功！`;
+                msgDiv.className = 'success';
+            } else {
+                msgDiv.textContent = `❌ ${result.message}`;
+                msgDiv.className = 'error';
+            }
+            
+        } catch (error) {
+            msgDiv.textContent = '❌ 傳送失敗，請檢查網路或 API 設定。';
+            msgDiv.className = 'error';
+        } finally {
+            setTimeout(() => { 
+                msgDiv.textContent = ''; 
+                document.getElementById('btnLeave').disabled = false;
+                if (!currentParsedDate.isOffDay) {
+                    document.getElementById('btnIn').disabled = false;
+                    document.getElementById('btnOut').disabled = false;
                 }
-            });
-
-            // 處理空櫃子的狀態
-            if (pierceCount === 0) {
-                pierceArea.innerHTML = '<div class="empty-state">目前還沒有獎牌，太慘了吧！</div>';
-            }
-            if (jamesCount === 0) {
-                jamesArea.innerHTML = '<div class="empty-state">目前還沒有獎牌，太慘了吧！</div>';
-            }
+            }, 4000);
         }
+    }
 
-        function addNickname() {
-            const recipient = document.getElementById('recipient').value;
-            const category = document.getElementById('category').value;
-            const nickname = document.getElementById('nickname').value;
-            const reason = document.getElementById('reason').value;
-
-            if (!nickname.trim()) {
-                alert('稱號不能是空白的！');
-                return;
-            }
-
-            fetch(API_URL, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded"
-                },
-                body: new URLSearchParams({
-                    recipient,
-                    category,
-                    nickname,
-                    reason
-                })
-            })
-            .then(res => res.text())
-            .then(res => {
-                console.log("server:", res);
-
-                document.getElementById('nickname').value = '';
-                document.getElementById('reason').value = '';
-
-                alert("新增成功 🎉");
-                loadData();
-            })
-            .catch(err => {
-                console.error(err);
-                alert("失敗 ❌");
-            });
-        }
-
-        function loadData() {
-            fetch(API_URL)
-                .then(res => res.json())
-                .then(data => {
-                    if (!Array.isArray(data) || data.length === 0) {
-                        nicknamesArray = [];
-                        renderList();
-                        return;
-                    }
-
-                    nicknamesArray = data.slice(1).map(row => ({
-                        recipient: row[0] || '',
-                        category: row[1] || 'honor',
-                        nickname: row[2] || '',
-                        reason: row[3] || ''
-                    }));
-
-                    renderList();
-                })
-                .catch(err => {
-                    console.error("讀取資料失敗:", err);
-                });
-        }
-
-        function deleteNickname(index) {
-            alert("目前版本還沒支援刪除（雲端版）");
-        }
-
-        // 初始渲染
-        loadData();
-        // 每 3 秒自動同步
-        setInterval(loadData, 3000);
-    </script>
+    window.onload = initDateTime;
+</script>
 
 </body>
 </html>
