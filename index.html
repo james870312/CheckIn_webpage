@@ -221,13 +221,12 @@
             if (result.status === "success") {
                 tbody.innerHTML = ''; 
                 
-                const reversedData = result.data.reverse();
+                const tableData = result.data;
 
-                // 如果該月完全沒資料，給個貼心提示
-                if (reversedData.length === 0) {
+                if (tableData.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; padding:15px; color:#999;">📭 這個月目前還沒有紀錄喔！</td></tr>`;
                 } else {
-                    reversedData.forEach(row => {
+                    tableData.forEach(row => {
                         let statusClass = "status-none";
                         if (row.status.includes('有上班')) statusClass = "status-ok";
                         if (row.status.includes('未上班')) statusClass = "status-no";
